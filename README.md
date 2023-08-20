@@ -19,4 +19,8 @@ RPAREN: )
 
 
 ### Approach
-Execution uses normal order reduction. As the interpreter reduces, it prints each step on a separate line. Variable capture is also handled during α-conversion.
+Execution uses normal order reduction. As the interpreter reduces, it prints each step on a separate line. Variable capture is also handled during α-conversion. Type `exit` to exit. Anything else is interpreted as an expression to be interpreted.
+
+
+### TODO
+- [ ] Allow setting custom terms that are interpreted as particular expressions during lexing.
