@@ -2,6 +2,7 @@ package util
 
 import (
 	"errors"
+	"fmt"
 )
 
 type Parser struct {
@@ -16,7 +17,7 @@ func NewParser(t []Token) (*Parser) {
 func (p* Parser) parseAdvance() {
 	if len(p.data) == 0 {
 		p.data = nil
-		p.next = newToken(0, EMPTY, "EOF")
+		p.next = newToken(EOF, "EOF")
 	} else {
 		p.next = p.data[0]
 		p.data = p.data[1:]
@@ -47,7 +48,7 @@ func (p* Parser) parseExpression() (Expression, error) {
 
 func (p* Parser) parseVariable() (Expression, error) {
 	if p.next.tokenType == TERM {
-		name := p.next.value
+		name := p.next.termValue
 		p.parseAdvance()
 		return newVariable(name), nil
 	} else {
@@ -104,6 +105,6 @@ func (p* Parser) Parse() (Expression, error) {
 }
 
 func makeParseError(expected string, found string) string {
-	return "Expected: " + expected + ", Found: " + found
+	return fmt.Sprintf("Expected: %s, Found: %s", expected, found)
 }
 

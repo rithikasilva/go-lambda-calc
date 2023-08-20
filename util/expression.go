@@ -1,20 +1,30 @@
 package util
 
+import "fmt"
+
+
+type ExpressionType uint16
+
+const (
+	VARIABLE ExpressionType = iota
+	ABSTRACTION
+	APPLICATION
+)
 
 type Expression interface {
 	DisplayExpression() string
-	getIdentity() string
+	getExpressionType() ExpressionType
 }
 
 type Variable struct {
 	term string
-	indentity string
+	expressionType ExpressionType
 }
 func newVariable(term string) Variable {
-	return Variable{term, "Variable"}
+	return Variable{term, VARIABLE}
 }
-func (v Variable) getIdentity() string {
-	return v.indentity
+func (v Variable) getExpressionType() ExpressionType {
+	return v.expressionType
 }
 func (v Variable) DisplayExpression() string {
 	return v.term
@@ -24,47 +34,39 @@ func (v Variable) DisplayExpression() string {
 type Abstraction struct {
 	term string
 	functionDefinition Expression
-	indentity string
+	expressionType ExpressionType
 }
-
 func newAbstraction(term string, rest Expression) Abstraction {
-	return Abstraction{term, rest, "Abstraction"}
+	return Abstraction{term, rest, ABSTRACTION}
 }
-func (a Abstraction) getIdentity() string {
-	return a.indentity
+func (a Abstraction) getExpressionType() ExpressionType {
+	return a.expressionType
 }
 func (a Abstraction) DisplayExpression() string {
-	return "λ" + a.term + "." + a.functionDefinition.DisplayExpression() 
+	return fmt.Sprintf("λ%s.%s", a.term, a.functionDefinition.DisplayExpression())
 }
 
 type Application struct {
 	function Expression
 	argument Expression
-	indentity string
+	expressionType ExpressionType
 }
 
 func newApplication(function Expression, argument Expression) Application {
-	return Application{function, argument, "Application"}
+	return Application{function, argument, APPLICATION}
 }
-
-func (a Application) getIdentity() string {
-	return a.indentity
+func (a Application) getExpressionType() ExpressionType {
+	return a.expressionType
 }
-
 func (a Application) DisplayExpression() string {
-	function := ""
-	if a.function.getIdentity() == "Abstraction" {
-		function = a.function.DisplayExpression() + " "
-	} else {
-		function = a.function.DisplayExpression() + " "
-	}
+	function := a.function.DisplayExpression()
 	argument := ""
-	if a.argument.getIdentity() == "Abstraction" {
+	if a.argument.getExpressionType() == ABSTRACTION {
 		argument = a.argument.DisplayExpression()
-	} else if a.argument.getIdentity() == "Application" {
-		argument = " (" + a.argument.DisplayExpression() + ")"
+	} else if a.argument.getExpressionType() == APPLICATION {
+		argument = fmt.Sprintf("(%s)", a.argument.DisplayExpression())
 	} else {
 		argument = a.argument.DisplayExpression()
 	}
-	return "(" + function + argument + ")"
+	return fmt.Sprintf("(%s %s)", function, argument)
 }

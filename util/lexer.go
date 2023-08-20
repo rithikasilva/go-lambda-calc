@@ -1,8 +1,8 @@
 package util
 
 import (
-	"unicode"
 	"fmt"
+	"unicode"
 )
 
 type TokenType int32
@@ -12,10 +12,9 @@ const (
 	RPAREN
 	LAMBDA
 	TERM
-	EMPTY
+	EOF
 	DOT
 )
-
 
 func tokenTypeToString(t TokenType) string {
 	if t == LPAREN {
@@ -26,71 +25,62 @@ func tokenTypeToString(t TokenType) string {
 		return "λ"
 	} else if t == TERM {
 		return "TERM"
-	} else if t == EMPTY {
+	} else if t == EOF {
 		return "EOF"
 	} else if t == DOT {
 		return "."
 	} else {
-		return "ERROR!"
+		return "UNEXPECTED TOKEN FOR CONVERSION"
 	}
 }
 
 type Token struct {
-	index uint64
 	tokenType TokenType
-	value string
+	termValue string // Non-empty if token is TERM
 }
 
-func newToken(index uint64, tokenType TokenType, value string) Token {
+func newToken(tokenType TokenType, termValue string) Token {
 	if tokenType != TERM {
-		return Token{index, tokenType, ""}
+		return Token{tokenType, ""}
 	} else {
-		return Token{index, tokenType, value}
+		return Token{tokenType, termValue}
 	}
 }
-
 
 func Tokenize(input string) []Token {
 	var result []Token
-	current_term := ""
-	char_position := 0
-
+	currentTerm := ""
 	if len(input) == 0 {
 		return result
 	}
-
 	for _, ch := range input {
-		char_position += 1
-		next_token := Token{0, EMPTY, ""}
+		nextToken := Token{EOF, ""}
 		if ch == 'λ' {
-			next_token = newToken(uint64(char_position), LAMBDA, "")
-		} else if  ch == '(' {
-			next_token = newToken(uint64(char_position), LPAREN, "")
+			nextToken = newToken(LAMBDA, "")
+		} else if ch == '(' {
+			nextToken = newToken(LPAREN, "")
 		} else if ch == '.' {
-			next_token = newToken(uint64(char_position), DOT, "")
+			nextToken = newToken(DOT, "")
 		} else if unicode.IsSpace(ch) {
 			// Do nothing
 		} else if ch == ')' {
-			next_token = newToken(uint64(char_position), RPAREN, "")
+			nextToken = newToken(RPAREN, "")
 		} else {
-			current_term = current_term + string(ch)
+			currentTerm = currentTerm + string(ch)
 			continue
 		}
 
-		if len(current_term) > 0 {
-			result = append(result, newToken(uint64(char_position), TERM, current_term))
-			current_term = ""
+		if len(currentTerm) > 0 {
+			result = append(result, newToken(TERM, currentTerm))
+			currentTerm = ""
 		}
-
-		if next_token.tokenType != EMPTY {
-			result = append(result, next_token)
+		
+		if nextToken.tokenType != EOF {
+			result = append(result, nextToken)
 		}
-
 	}
 	return result
 }
-
-
 
 func DisplayLexedInput(t []Token) {
 	fmt.Print("\n")
@@ -102,13 +92,13 @@ func DisplayLexedInput(t []Token) {
 		} else if item.tokenType == LAMBDA {
 			fmt.Print("λ")
 		} else if item.tokenType == TERM {
-			fmt.Print(item.value)
-		} else if item.tokenType == EMPTY {
-			fmt.Print(" ")
+			fmt.Print(item.termValue)
+		} else if item.tokenType == EOF {
+			fmt.Print("EOF")
 		} else if item.tokenType == DOT {
 			fmt.Print(".")
 		} else {
-			fmt.Print("ERROR!!!!!")
+			fmt.Print("UNEXPECTED TOKEN TO DISPLAY")
 		}
 	}
 	fmt.Print("\n")
