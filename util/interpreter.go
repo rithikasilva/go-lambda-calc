@@ -5,24 +5,17 @@ import (
 	"strconv"
 )
 
-
-func Interpret(e Expression) (Expression) {
+func Interpret(e Expression) Expression {
 	isNormalForm := false
 	for !isNormalForm {
 		reducer := newBetaReduction()
 		reducedExpression := reducer.visit(e)
 		isNormalForm = !reducer.reduced
-		// Print the step
 		fmt.Println(e.DisplayExpression())
 		e = reducedExpression
 	}
 	return e
 }
-
-
-
-
-
 
 func visitFreeVariables(e Expression) map[string]bool {
 	if e.getExpressionType() == VARIABLE {
@@ -38,7 +31,7 @@ func visitFreeVariables(e Expression) map[string]bool {
 			return setDifference(left, right)
 		} else {
 			return createSet("error!")
-		}		
+		}
 	} else if e.getExpressionType() == APPLICATION {
 		if appCast, ok := e.(Application); ok {
 			left := visitFreeVariables(appCast.function)
@@ -52,17 +45,14 @@ func visitFreeVariables(e Expression) map[string]bool {
 	}
 }
 
-
-
 type AlphaConversion struct {
-	toReplace string
+	toReplace   string
 	replacement Expression
 }
 
-func newAlphaConversion(tr string, r Expression) (*AlphaConversion) {
+func newAlphaConversion(tr string, r Expression) *AlphaConversion {
 	return &AlphaConversion{tr, r}
 }
-
 
 func newName(unavailableNames map[string]bool, name string) string {
 	num := 1
@@ -76,7 +66,7 @@ func newName(unavailableNames map[string]bool, name string) string {
 	}
 }
 
-func (a* AlphaConversion) visit(e Expression) (Expression) {
+func (a *AlphaConversion) visit(e Expression) Expression {
 	if e.getExpressionType() == VARIABLE {
 		if varCast, ok := e.(Variable); ok {
 			if varCast.term == a.toReplace {
@@ -90,7 +80,6 @@ func (a* AlphaConversion) visit(e Expression) (Expression) {
 	} else if e.getExpressionType() == ABSTRACTION {
 		if absCast, ok := e.(Abstraction); ok {
 			freeVars := visitFreeVariables(a.replacement)
-			// Check to see if current thing is free or not
 			if _, ok := freeVars[absCast.term]; ok {
 				forUnvailable := visitFreeVariables(e)
 				unavilableNames := setUnion(forUnvailable, createSet(absCast.term))
@@ -118,16 +107,15 @@ func (a* AlphaConversion) visit(e Expression) (Expression) {
 	}
 }
 
-
 type BetaReduction struct {
 	reduced bool
 }
 
-func newBetaReduction() (*BetaReduction) {
+func newBetaReduction() *BetaReduction {
 	return &BetaReduction{false}
 }
 
-func (b* BetaReduction) visit(e Expression) (Expression) {
+func (b *BetaReduction) visit(e Expression) Expression {
 	if e.getExpressionType() == VARIABLE {
 		if varCast, ok := e.(Variable); ok {
 			return newVariable(varCast.term)
@@ -139,7 +127,7 @@ func (b* BetaReduction) visit(e Expression) (Expression) {
 			return newAbstraction(absCast.term, absCast.functionDefinition)
 		} else {
 			return newVariable("ERROR")
-		} 
+		}
 	} else if e.getExpressionType() == APPLICATION {
 		if appCast, ok := e.(Application); ok {
 			if appCast.function.getExpressionType() == ABSTRACTION && !b.reduced {

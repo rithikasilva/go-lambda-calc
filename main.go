@@ -2,71 +2,71 @@ package main
 
 import (
 	"bufio"
-	"os"
+	"errors"
 	"fmt"
 	"go-lambda-calc/util"
+	"os"
+	"strings"
 )
 
-
-func tempTest() {
-	content := []string{
-	"((λx.x y) z)\n",
-	"(λx.x z)\n",
-	"λx.x\n",
-	"(λm.((m λt.λf.t) λx.λt.λf.f) λz.λs.z)\n",
-	"(λx.λy.(x y) y)\n", "λx\n",
-	"exit\n"}
-
-	for _, text := range content{
-		fmt.Print("\n\n\n")
-		if text == "exit\n" {
-			break
-		} else if len(text) == 1 {
-			fmt.Println("ERROR: ")
-			fmt.Println("invalid length for input")
-			continue
-		} else {
-			result := util.Tokenize(text)
-			parser := util.NewParser(result)
-			expression, err := parser.Parse()
-			fmt.Println("Parsed:")
-			fmt.Println(expression.DisplayExpression())
-			fmt.Println("---------")
-			fmt.Println("REDUCTION:")
-			reduced :=  util.Interpret(expression)
-			fmt.Println("---------")
-			if err != nil {
-				fmt.Println("ERROR: ")
-				fmt.Println(err)
-			} else {
-				fmt.Println("RESULT REDUCED: ")
-				fmt.Println(reduced.DisplayExpression())
-			}
+func isValidSubstitution(s string) bool {
+	for _, r := range s {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') {
+			return false
 		}
+	}
+	return true
+}
+
+func checkNewSubstitution(text string) (string, string, error) {
+	splitted := strings.Split(text, "=")
+	if len(splitted) != 2 {
+		return "", "", errors.New("not text and corresponding substitution")
+	}
+	shorthand := splitted[0]
+	if !isValidSubstitution(shorthand) {
+		return "", "", errors.New("substitution text does not contains characters from A-z")
+	}
+	substitution := splitted[1]
+	result := util.Tokenize(substitution, map[string]string{})
+	parser := util.NewParser(result)
+	_, err := parser.Parse()
+	if err != nil {
+		return "", "", err
+	} else {
+		return shorthand, substitution, nil
 	}
 }
 
-
-func lexParseInterpretMode() {
+func run() {
 	reader := bufio.NewReader(os.Stdin)
+	substitution := map[string]string{}
 	for {
-		fmt.Print("> ")
+		fmt.Print(">>> ")
 		text, _ := reader.ReadString('\n')
-		if text == "exit\n" {
-			break
-		} else if len(text) == 1 {
+		if len(text) == 1 {
 			fmt.Println("ERROR: ")
 			fmt.Println("invalid length for input")
+		} else if text == "q\n" {
+			break
+		} else if text == "a\n" {
+			text, _ := reader.ReadString('\n')
+			key, value, err := checkNewSubstitution(text)
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				substitution[key] = value
+			}
 			continue
 		} else {
-			result := util.Tokenize(text)
+			result := util.Tokenize(text, substitution)
 			parser := util.NewParser(result)
 			expression, err := parser.Parse()
 			fmt.Println("Parsed:")
 			fmt.Println(expression.DisplayExpression())
 			fmt.Println("---------")
 			fmt.Println("REDUCTION:")
-			reduced :=  util.Interpret(expression)
+			reduced := util.Interpret(expression)
 			fmt.Println("---------")
 			if err != nil {
 				fmt.Println("ERROR: ")
@@ -80,6 +80,5 @@ func lexParseInterpretMode() {
 }
 
 func main() {
-	tempTest()
+	run()
 }
-

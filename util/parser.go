@@ -10,11 +10,11 @@ type Parser struct {
 	next Token
 }
 
-func NewParser(t []Token) (*Parser) {
+func NewParser(t []Token) *Parser {
 	return &Parser{t[1:], t[0]}
 }
 
-func (p* Parser) parseAdvance() {
+func (p *Parser) parseAdvance() {
 	if len(p.data) == 0 {
 		p.data = nil
 		p.next = newToken(EOF, "EOF")
@@ -24,7 +24,7 @@ func (p* Parser) parseAdvance() {
 	}
 }
 
-func (p* Parser) parseConsume(t TokenType) (error) {
+func (p *Parser) parseConsume(t TokenType) error {
 	if p.next.tokenType == t {
 		p.parseAdvance()
 		return nil
@@ -33,7 +33,7 @@ func (p* Parser) parseConsume(t TokenType) (error) {
 	}
 }
 
-func (p* Parser) parseExpression() (Expression, error) {
+func (p *Parser) parseExpression() (Expression, error) {
 	if p.next.tokenType == LPAREN {
 		return p.parseApplication()
 	} else if p.next.tokenType == LAMBDA {
@@ -46,7 +46,7 @@ func (p* Parser) parseExpression() (Expression, error) {
 
 }
 
-func (p* Parser) parseVariable() (Expression, error) {
+func (p *Parser) parseVariable() (Expression, error) {
 	if p.next.tokenType == TERM {
 		name := p.next.termValue
 		p.parseAdvance()
@@ -56,9 +56,9 @@ func (p* Parser) parseVariable() (Expression, error) {
 	}
 }
 
-func (p* Parser) parseApplication() (Expression, error) {
+func (p *Parser) parseApplication() (Expression, error) {
 	if p.next.tokenType == LPAREN {
-		p.parseAdvance() // Consume the lambda
+		p.parseAdvance() 
 		leftExpression, err := p.parseExpression()
 		if err != nil {
 			return newVariable("invalid"), err
@@ -74,8 +74,7 @@ func (p* Parser) parseApplication() (Expression, error) {
 	}
 }
 
-
-func (p* Parser) parseAbstraction() (Expression, error) {
+func (p *Parser) parseAbstraction() (Expression, error) {
 	if p.next.tokenType == LAMBDA {
 		p.parseAdvance()
 		variable, err := p.parseVariable()
@@ -87,7 +86,7 @@ func (p* Parser) parseAbstraction() (Expression, error) {
 			if err != nil {
 				return newVariable("invalid"), err
 			}
-			expression, err :=  p.parseExpression()
+			expression, err := p.parseExpression()
 			if err != nil {
 				return newVariable("invalid"), err
 			}
@@ -100,11 +99,10 @@ func (p* Parser) parseAbstraction() (Expression, error) {
 	}
 }
 
-func (p* Parser) Parse() (Expression, error) {
+func (p *Parser) Parse() (Expression, error) {
 	return p.parseExpression()
 }
 
 func makeParseError(expected string, found string) string {
 	return fmt.Sprintf("Expected: %s, Found: %s", expected, found)
 }
-

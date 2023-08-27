@@ -2,7 +2,6 @@ package util
 
 import "fmt"
 
-
 type ExpressionType uint16
 
 const (
@@ -17,47 +16,54 @@ type Expression interface {
 }
 
 type Variable struct {
-	term string
+	term           string
 	expressionType ExpressionType
 }
+
 func newVariable(term string) Variable {
 	return Variable{term, VARIABLE}
 }
+
 func (v Variable) getExpressionType() ExpressionType {
 	return v.expressionType
 }
+
 func (v Variable) DisplayExpression() string {
 	return v.term
 }
 
-
 type Abstraction struct {
-	term string
+	term               string
 	functionDefinition Expression
-	expressionType ExpressionType
+	expressionType     ExpressionType
 }
+
 func newAbstraction(term string, rest Expression) Abstraction {
 	return Abstraction{term, rest, ABSTRACTION}
 }
+
 func (a Abstraction) getExpressionType() ExpressionType {
 	return a.expressionType
 }
+
 func (a Abstraction) DisplayExpression() string {
 	return fmt.Sprintf("λ%s.%s", a.term, a.functionDefinition.DisplayExpression())
 }
 
 type Application struct {
-	function Expression
-	argument Expression
+	function       Expression
+	argument       Expression
 	expressionType ExpressionType
 }
 
 func newApplication(function Expression, argument Expression) Application {
 	return Application{function, argument, APPLICATION}
 }
+
 func (a Application) getExpressionType() ExpressionType {
 	return a.expressionType
 }
+
 func (a Application) DisplayExpression() string {
 	function := a.function.DisplayExpression()
 	argument := ""

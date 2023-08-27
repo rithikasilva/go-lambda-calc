@@ -1,8 +1,10 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"unicode"
+	"unicode/utf8"
 )
 
 type TokenType int32
@@ -36,7 +38,7 @@ func tokenTypeToString(t TokenType) string {
 
 type Token struct {
 	tokenType TokenType
-	termValue string // Non-empty if token is TERM
+	termValue string
 }
 
 func newToken(tokenType TokenType, termValue string) Token {
@@ -47,13 +49,37 @@ func newToken(tokenType TokenType, termValue string) Token {
 	}
 }
 
-func Tokenize(input string) []Token {
+type TokenIterator struct {
+	left string
+	seen string
+}
+
+func (t *TokenIterator) isEmpty() bool {
+	return len(t.left) == 0
+}
+
+func (t *TokenIterator) next() (rune, error) {
+	if t.isEmpty() {
+		return '\n', errors.New("no more to parse")
+	} else {
+		char, i := utf8.DecodeRuneInString(t.left)
+		result := t.left[0]
+		t.left = t.left[i:]
+		t.seen = t.seen + string(result)
+		return char, nil
+
+	}
+}
+
+func Tokenize(input string, data map[string]string) []Token {
 	var result []Token
 	currentTerm := ""
 	if len(input) == 0 {
 		return result
 	}
-	for _, ch := range input {
+	ti := TokenIterator{input, ""}
+	for !ti.isEmpty() {
+		ch, _ := ti.next()
 		nextToken := Token{EOF, ""}
 		if ch == 'λ' {
 			nextToken = newToken(LAMBDA, "")
@@ -62,7 +88,11 @@ func Tokenize(input string) []Token {
 		} else if ch == '.' {
 			nextToken = newToken(DOT, "")
 		} else if unicode.IsSpace(ch) {
-			// Do nothing
+			if sub, ok := data[currentTerm]; ok {
+				ti.left = sub + ti.left
+				currentTerm = ""
+				continue
+			}
 		} else if ch == ')' {
 			nextToken = newToken(RPAREN, "")
 		} else {
@@ -71,10 +101,15 @@ func Tokenize(input string) []Token {
 		}
 
 		if len(currentTerm) > 0 {
-			result = append(result, newToken(TERM, currentTerm))
-			currentTerm = ""
+			if sub, ok := data[currentTerm]; ok {
+				ti.left = sub + ti.left
+				currentTerm = ""
+				continue
+			} else {
+				result = append(result, newToken(TERM, currentTerm))
+				currentTerm = ""
+			}
 		}
-		
 		if nextToken.tokenType != EOF {
 			result = append(result, nextToken)
 		}
